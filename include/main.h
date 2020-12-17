@@ -8,7 +8,7 @@
 #include <getopt.h>
 
 #include "mpi.h"
-#include "../include/error.h"
+#include "../include/fileio.h"
 
 /**
  * enum: des_mode
@@ -42,5 +42,12 @@ struct user_settings
  * Loads command-line arguments into user settings struct
  */
 void load_settings(struct user_settings *settings, int numArgs, char **args);
+
+/**
+ * function: user_settings
+ * -----------------------
+ * Prints usage message to stderr
+ */
+void usage();
 
 #endif

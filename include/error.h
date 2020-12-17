@@ -10,5 +10,6 @@
 enum error_codes 
 {
         NORMAL,         // program exited normally
-        INVALID_ARGS    // program exited due to invalid command-line args
+        INVALID_ARGS,   // program exited due to invalid command-line args
+        INVALID_TARGET  // program exited due to an invalid target file
 };

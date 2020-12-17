@@ -17,6 +17,11 @@ main(int argc, char **argv)
                 // passing command-line arguments 
                 struct user_settings settings;
                 load_settings(&settings, argc, argv);
+
+                // load target into chunk
+                struct chunk target;
+                init_chunk(&target);
+                load_target(&target, settings.target);
         }
 
         MPI_Finalize(); 
@@ -58,14 +63,20 @@ load_settings(struct user_settings *settings, int numArgs, char **args)
 
         // grabbing target file, which should be last arg
         if (optind != numArgs - 1) {
-                exit(INVALID_ARGS);
+                usage();
         } else {
                 settings->target = args[optind];
         }
 
         // checking all settings are valid
         if (settings->mode == INVALID || settings->target == NULL) {
-                printf("%d, %s\n", settings->mode, settings->target);
-                exit(INVALID_ARGS);
+                usage();
         }   
+}
+
+void
+usage()
+{
+        fprintf(stderr, "usage: -ed [-k key] target\n");
+        exit(INVALID_ARGS);        
 }
