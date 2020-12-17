@@ -33,12 +33,14 @@ So, while DES is slow and horrible (by design; compared to modern algorithms suc
 
 # Examples:
 ```bash
-mpiexec -n 4 bin/des -e tst/test.txt
+mpiexec -n 12 bin/des -e tst/test.txt
 ```
 This will generate a .key file and a completed file.
 The .key file contains the key and the completed file contains the cipher text.
 In order to decrypt this file, you would run:
 ```bash
-mpiexec -n 4 bin/des -d -k des_key.key completed
+mpiexec -n 12 bin/des -d -k des_key.key completed
 ```
 This will overwrite the completed file with the decrypted plain-text.
+
+Note: the '12' specified on the -n flag is merely an example and should, for optimum results, be set to the number of cores on your CPU.
