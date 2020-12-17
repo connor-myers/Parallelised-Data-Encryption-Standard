@@ -9,6 +9,7 @@
 
 #include "mpi.h"
 #include "../include/fileio.h"
+#include "../include/key.h"
 
 /**
  * enum: des_mode

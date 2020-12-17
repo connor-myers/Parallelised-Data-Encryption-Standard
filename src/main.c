@@ -22,6 +22,15 @@ main(int argc, char **argv)
                 struct chunk target;
                 init_chunk(&target);
                 load_target(&target, settings.target);
+
+                // setup-key
+                key key = 0;
+                if (settings.key != NULL) {
+                        load_key(&key, settings.key);
+                } else {
+                        generate_random_key(&key);
+                        save_key(key, "des_key.key");
+                }
         }
 
         MPI_Finalize(); 
