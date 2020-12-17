@@ -24,3 +24,21 @@ utilises the same algorithm as DES; it simply applies the DES algorithm three ti
 three unique keys. This gives it an effective key-size of 168 bits. 3DES, to this day, is still considered secure.
 (Sort of, but not really since AES is both more secure and faster than 3DES so there really isn't any point in using any variation of the DES algorithm in this day and age)
 So, while DES is slow and horrible (by design; compared to modern algorithms such as AES) this was still a fun and rewarding project.
+
+## Requirements
+- POSIX complient OS
+- OpenMPI
+
+## How To Run
+
+# Examples:
+```bash
+mpiexec -n 4 bin/des -e tst/test.txt
+```
+This will generate a .key file and a completed file.
+The .key file contains the key and the completed file contains the cipher text.
+In order to decrypt this file, you would run:
+```bash
+mpiexec -n 4 bin/des -d -k des_key.key completed
+```
+This will overwrite the completed file with the decrypted plain-text.
