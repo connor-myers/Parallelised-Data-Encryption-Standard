@@ -31,7 +31,7 @@ So, while DES is slow and horrible (by design; compared to modern algorithms suc
 
 ## How To Run
 
-# Examples:
+### Example:
 ```bash
 mpiexec -n 12 bin/des -e tst/test.txt
 ```
