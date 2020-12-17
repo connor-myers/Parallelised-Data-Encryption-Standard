@@ -8,19 +8,10 @@
 #include <getopt.h>
 
 #include "mpi.h"
+#include "../include/des.h"
+#include "../include/des_types.h"
 #include "../include/fileio.h"
 #include "../include/key.h"
-
-/**
- * enum: des_mode
- * ----------------------
- * Different possible modes for des - encryption or decryption
- */
-enum des_mode {
-        INVALID,
-        ENCRYPTION,
-        DECRYPTION
-};
 
 /**
  * struct: user_settings

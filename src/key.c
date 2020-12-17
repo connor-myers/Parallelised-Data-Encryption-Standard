@@ -16,6 +16,7 @@ void generate_random_key(key *key)
         To generate a 64-bit number
         *key |=  rand() & 0xFF;
         */
+        *key |= ((uint64_t)(rand() & 0xFF));
         *key |= ((uint64_t)(rand() & 0xFF)) <<  8;
         *key |= ((uint64_t)(rand() & 0xFF)) << 16;
         *key |= ((uint64_t)(rand() & 0xFF)) << 24;

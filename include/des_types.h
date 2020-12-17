@@ -16,6 +16,22 @@
 typedef uint64_t block; // a 'block' in DES is 64-bits
 typedef uint64_t key;   // keys in DES are 64-bits
 
+// these typdefs make des algorithm more readable
+typedef uint64_t uint56;
+typedef uint64_t uint48;
+typedef uint32_t uint28;
+
+/**
+ * enum: des_mode
+ * ----------------------
+ * Different possible modes for des - encryption or decryption
+ */
+enum des_mode {
+        INVALID,
+        ENCRYPTION,
+        DECRYPTION
+};
+
 /**
  * struct: chunk
  * -------------

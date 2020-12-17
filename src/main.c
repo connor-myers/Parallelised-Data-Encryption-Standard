@@ -1,14 +1,16 @@
 #include "../include/main.h"
 
+// keep global so we can access from des.c
+int worldSize;
+int numWorkers;
+int myRank;
+
 int
 main(int argc, char **argv)
 {
         MPI_Init(&argc, &argv);
 
         // initialising MPI variables 
-        int worldSize;
-        int numWorkers;
-        int myRank;
         MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
         numWorkers = worldSize - 1;
@@ -31,6 +33,13 @@ main(int argc, char **argv)
                         generate_random_key(&key);
                         save_key(key, "des_key.key");
                 }
+
+                // initialise destination chunk
+                struct chunk destination;
+                init_chunk(&destination);
+
+                // apply DES
+                run_des(&target, &destination, key, settings.mode);
         }
 
         MPI_Finalize(); 
