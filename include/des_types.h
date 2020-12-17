@@ -20,6 +20,7 @@ typedef uint64_t key;   // keys in DES are 64-bits
 typedef uint64_t uint56;
 typedef uint64_t uint48;
 typedef uint32_t uint28;
+typedef uint8_t  uint6;
 
 /**
  * enum: des_mode
@@ -53,6 +54,7 @@ struct chunk
 
 void init_chunk(struct chunk *chunk);
 void add_block(struct chunk *chunk, block block);
+void create_empty_copy(struct chunk *src, struct chunk *dst);
 void free_chunk(struct chunk *chunk);
 
 #endif

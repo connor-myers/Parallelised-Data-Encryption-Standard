@@ -12,5 +12,6 @@ enum error_codes
         NORMAL,         // program exited normally
         INVALID_ARGS,   // program exited due to invalid command-line args
         INVALID_TARGET, // program exited due to an invalid target file
-        INVALID_KEY     // program exited due to bad key file
+        INVALID_KEY,    // program exited due to bad key file
+        INVALID_SAVE    // program exited due to bad save file name
 };

@@ -33,13 +33,20 @@ main(int argc, char **argv)
                         generate_random_key(&key);
                         save_key(key, "des_key.key");
                 }
+                printf("key=%016llx\n", key);
 
                 // initialise destination chunk
                 struct chunk destination;
-                init_chunk(&destination);
+                create_empty_copy(&target, &destination);
 
                 // apply DES
+                clock_t begin = clock();
                 run_des(&target, &destination, key, settings.mode);
+                clock_t end = clock();
+                
+                save_chunk(&destination, "completed");
+        } else {
+                worker_des();
         }
 
         MPI_Finalize(); 

@@ -34,6 +34,31 @@ load_target(struct chunk *chunk, char *targetPath)
 }
 
 /**
+ * function: save_chunk
+ * ---------------------
+ * Saves the bytes of the chunk to a file called filePath
+ * 
+ * chunk:       The chunk to be saved
+ * targetPath:  The filepath to save the file as 
+ */
+void
+save_chunk(struct chunk *chunk, char *filePath)
+{
+        FILE *file = fopen(filePath, "wb");
+        if (file == NULL) {
+                exit(INVALID_SAVE);
+        }
+
+        for (int i = 0; i < chunk->size; i++) {
+                chunk->blocks[i] = __bswap_64(chunk->blocks[i]);
+                printf("%016llx\n", chunk->blocks[i]);
+        }
+        fwrite(chunk->blocks, sizeof(block), chunk->size, file);
+
+        fclose(file);
+}
+
+/**
  * function: load_key
  * ------------------
  * Loads the 64-bit key from key file

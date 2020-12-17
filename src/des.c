@@ -139,12 +139,65 @@ run_des(struct chunk *src, struct chunk *dst, key key, enum des_mode mode)
         memset(subKeys, 0, sizeof(uint48) * NUM_SUB_KEYS);
         generate_subkeys(subKeys, key);
 
-        printf("key=%016llx\n", key);
-        for (int i = 0; i < 16; i++) {
-                printf("%d: %llx\n", i, subKeys[i]);
+        // broadcast subkeys to MPI workers
+        MPI_Bcast((uint48*) subKeys, 16, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+        // divide blocks evenly amongst worker; master can handle remainder
+        int blocksPerWorker = src->size / numWorkers;
+        int remainingBlocks = src->size % numWorkers;
+        for (int i = 0; i < numWorkers; i++) {
+                MPI_Send(&blocksPerWorker, 1, MPI_INT, i + 1, 0, MPI_COMM_WORLD);
+                MPI_Send(src->blocks + (i * blocksPerWorker), 
+                        blocksPerWorker,
+                        MPI_UNSIGNED_LONG, i + 1,
+                        mode,
+                        MPI_COMM_WORLD);
         }
 
-        
+        // master can handle remainder while workers work
+        for (int i = numWorkers * blocksPerWorker; i < src->size; i++) {
+                des_on_block(mode, subKeys, &src->blocks[i],
+                        &dst->blocks[i]);
+        }
+
+        /* Receive finished blocks*/
+        for (int i = 0; i < numWorkers; i++) {
+                block *chunk = malloc(sizeof(block) * blocksPerWorker);
+                MPI_Recv(chunk,
+                        blocksPerWorker,
+                        MPI_UNSIGNED_LONG,
+                        i + 1,
+                        0,
+                        MPI_COMM_WORLD,
+                        MPI_STATUS_IGNORE);
+                memcpy(dst->blocks + (i * blocksPerWorker), chunk,
+                        sizeof(block) * blocksPerWorker);
+        }
+}
+
+void
+worker_des()
+{
+        /* Get subkey from broadcast*/
+        uint48 subKeys[16];
+        MPI_Bcast((uint48*) subKeys, 16, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+        MPI_Status status;
+        /* First message is how many blocks we're getting */
+        int numBlocks;
+        MPI_Recv(&numBlocks, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        block *chunkSrc = malloc(sizeof(block) * numBlocks);
+        block *chunkDst = malloc(sizeof(block) * numBlocks);
+        /* here */
+        MPI_Recv(chunkSrc, numBlocks, MPI_UNSIGNED_LONG, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+        //#pragma omp parallel for
+        for (int i = 0; i < numBlocks; i++) {
+                des_on_block(status.MPI_TAG, subKeys, &chunkSrc[i], &chunkDst[i]);
+        }
+        /* Send finished work */
+        MPI_Send(chunkDst, numBlocks, MPI_UNSIGNED_LONG, 0, 0, MPI_COMM_WORLD);
 }
 
 void
@@ -217,4 +270,130 @@ create_c_and_d_pairs(uint56 kPlus, uint28 *cBlocks, uint28 *dBlocks)
         }
 }
 
+void
+des_on_block(int mode, uint48 *subKeys, block *src, block *dst)
+{
+        // First, we need to encode (i.e. apply an initial permutation)
+        // the block
+        block encoded = 0;
+        encode_block(&encoded, *src);
 
+        u_int32_t lN[17];
+        u_int32_t rN[17];
+
+        lN[0] = (encoded & 0xFFFFFFFF00000000) >> 32;
+        rN[0] =  encoded & 0x00000000FFFFFFFF;
+
+        // Now, generate lN and rN values for 1 <= N <= 16
+        for (int i = 1; i <= 16; i++) {
+                lN[i] = rN[i - 1];
+                if (mode == ENCRYPTION)
+                        rN[i] = lN[i - 1] ^ f(rN[i - 1], subKeys[i - 1]);
+                else if (mode == DECRYPTION)
+                        rN[i] = lN[i - 1] ^ f(rN[i - 1], subKeys[16 - i]);        
+        }
+
+        // Combing R16 and L16 together into one 64 bit number
+        u_int64_t rNlN = ((u_int64_t)rN[16]) << 32;
+        rNlN |= lN[16];
+        
+        // Apply ip_1 permutation
+        *dst = inverse_permutation(rNlN);
+        //printf("%016llx\n", *dst);
+}
+
+void
+encode_block(block *encoded, block block)
+{
+        // Applying the permutation                        
+        for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                        *encoded |= (NTH_BIN_DIGIT(block, 64 - ip[i][j]))
+                                        << (63 - (j + (8 * i)));
+                }
+        }
+}
+
+u_int32_t f(u_int32_t rN_1, u_int64_t kN)
+{
+        uint48 temp = 0;
+
+        // Expanding Rn-1 to 48 bits so we can XOR it with the 48-bit subkey (kN)
+        uint48 rNE = E(rN_1);
+        temp = kN ^ rNE;
+
+        // Now, we need to break temp into 8 blocks of six bits so we can
+        // apply the Selection Table over it
+        uint6 B[8];
+        for (int i = 0; i < 8; i++)
+        {
+                B[i] = (temp >> 42 - (i * 6)) & 0x3F; // 3F = 0b111111
+        }
+
+        u_int32_t sCompiled = 0;
+        for (int i = 0; i < 8; i++)
+        {
+                u_int32_t component = S(B[i], i);
+                sCompiled |= (component << (28 - (i * 4)));
+        }
+
+        return P(sCompiled);
+}
+
+uint48 E(u_int32_t rN_1)
+{
+        uint48 expanded = 0;
+
+        for (int i = 0; i < 8; i++)
+        {
+                for (int j = 0; j < 6; j++)
+                {
+                        expanded |= ((u_int64_t)(NTH_BIN_DIGIT(rN_1, 32 - eST[i][j])))
+                                        << (47 - (j + (6 * i)));
+                }
+        }
+
+        return expanded;
+}
+
+u_int8_t S(uint6 Bi, uint8_t boxNum)
+{
+        u_int8_t i = 0;
+        i |= ((Bi & 0b100000) >> 4);
+        i |= (Bi & 0b000001);        
+
+        u_int8_t j = 0;
+        j = ((Bi & 0b011110) >> 1);
+
+        return sTables[boxNum][i][j];
+}
+
+u_int32_t P(u_int32_t sCompiled)
+{
+        u_int32_t permutated = 0;
+        for (int i = 0; i < 8; i++)
+        {
+                for (int j = 0; j < 4; j++)
+                {
+                        permutated |= ((u_int64_t)(NTH_BIN_DIGIT(sCompiled, 32 - p[i][j])))
+                                        << (31 - (j + (4 * i)));
+                }
+        }
+
+        return permutated;
+}
+
+block inverse_permutation(block block)
+{
+        u_int64_t permutated = 0;
+        for (int i = 0; i < 8; i++)
+        {
+                for (int j = 0; j < 8; j++)
+                {
+                        permutated |= (NTH_BIN_DIGIT(block, 64 - ip_1[i][j]))
+                                        << (63 - (j + (8 * i)));
+                }
+        }                        
+        
+        return permutated;
+}

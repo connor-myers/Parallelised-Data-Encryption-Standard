@@ -42,6 +42,14 @@ add_block(struct chunk *chunk, block block)
         chunk->size++;
 }
 
+void
+create_empty_copy(struct chunk *src, struct chunk *dst)
+{
+        dst->blocks = malloc(sizeof(block) * src->capacity);
+        dst->size = src->size;
+        dst->capacity = src->capacity;
+}
+
 /**
  * function: free_data
  * --------------------
