@@ -16,11 +16,11 @@ main(int argc, char **argv)
         if (myRank == 0) {
                 // passing command-line arguments 
                 struct user_settings settings;
-                load_settings(&settings, argc - 1, argv + 1);
+                load_settings(&settings, argc, argv);
         }
 
         MPI_Finalize(); 
-        
+
         return 0;
 }
 
@@ -32,8 +32,8 @@ main(int argc, char **argv)
  * 
  * settings:    pointer to empty user_settings struct. Will get filled with
  *              corresponding arguments from commandline arguments
- * numArgs:     Number of command-line arguments (not including program name) 
- * args:        Command-line arguments (not including program name) 
+ * numArgs:     Number of command-line arguments 
+ * args:        Command-line arguments
  */
 void
 load_settings(struct user_settings *settings, int numArgs, char **args)
@@ -41,10 +41,31 @@ load_settings(struct user_settings *settings, int numArgs, char **args)
         // default values
         memset(settings, 0, sizeof(struct user_settings));
         
-        // int c;
-        // while((c = getopt(numArgs, args, "edk:")) != -1) {
-        //         switch (c) {
+        int c;
+        while((c = getopt(numArgs, args, "edk:")) != -1) {
+                switch (c) {
+                        case 'e':
+                                settings->mode = ENCRYPTION;
+                                break;
+                        case 'd':
+                                settings->mode = DECRYPTION;
+                                break;
+                        case 'k':
+                                settings->key = optarg;
+                                break;
+                }
+        }
 
-        //         }
-        // }                       
+        // grabbing target file, which should be last arg
+        if (optind != numArgs - 1) {
+                exit(INVALID_ARGS);
+        } else {
+                settings->target = args[optind];
+        }
+
+        // checking all settings are valid
+        if (settings->mode == INVALID || settings->target == NULL) {
+                printf("%d, %s\n", settings->mode, settings->target);
+                exit(INVALID_ARGS);
+        }   
 }

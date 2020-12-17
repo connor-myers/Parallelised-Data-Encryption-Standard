@@ -8,6 +8,7 @@
 #include <getopt.h>
 
 #include "mpi.h"
+#include "../include/error.h"
 
 /**
  * enum: des_mode
