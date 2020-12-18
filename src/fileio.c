@@ -51,7 +51,6 @@ save_chunk(struct chunk *chunk, char *filePath)
 
         for (int i = 0; i < chunk->size; i++) {
                 chunk->blocks[i] = __bswap_64(chunk->blocks[i]);
-                printf("%016llx\n", chunk->blocks[i]);
         }
         fwrite(chunk->blocks, sizeof(block), chunk->size, file);
 

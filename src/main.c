@@ -33,7 +33,6 @@ main(int argc, char **argv)
                         generate_random_key(&key);
                         save_key(key, "des_key.key");
                 }
-                printf("key=%016llx\n", key);
 
                 // initialise destination chunk
                 struct chunk destination;
@@ -43,6 +42,9 @@ main(int argc, char **argv)
                 clock_t begin = clock();
                 run_des(&target, &destination, key, settings.mode);
                 clock_t end = clock();
+
+                double timeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+                printf("Task Completed. Time elapsed: %f seconds\n", timeSpent);
                 
                 save_chunk(&destination, "completed");
         } else {

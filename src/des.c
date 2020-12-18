@@ -299,7 +299,6 @@ des_on_block(int mode, uint48 *subKeys, block *src, block *dst)
         
         // Apply ip_1 permutation
         *dst = inverse_permutation(rNlN);
-        //printf("%016llx\n", *dst);
 }
 
 void
