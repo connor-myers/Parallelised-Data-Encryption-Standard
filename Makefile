@@ -15,4 +15,4 @@ $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -I$(SRC) -c $< -o $@
 
 clean:
-	rm -rf obj/* bin/*
+	rm -rf obj/* bin/* completed des_key.key

@@ -38,7 +38,7 @@ main(int argc, char **argv)
                 struct chunk destination;
                 create_empty_copy(&target, &destination);
 
-                // apply DES
+                // apply DES; only time des algorithm, not IO stuff.
                 clock_t begin = clock();
                 run_des(&target, &destination, key, settings.mode);
                 clock_t end = clock();
