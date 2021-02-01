@@ -1,5 +1,5 @@
 # Parallelised-Data-Encryption-Standard
-A parallelised implementation of the Data Encryption Standard (DES) using C, MPI and a splash of OpenMP
+A parallelised implementation of the Data Encryption Standard (DES) using C and MPI
 
 ## Introduction
 
